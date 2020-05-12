@@ -19,8 +19,8 @@ export default function App() {
   const [mowers, setMowers] = useState({
     array: [
       {
-        startX: 0,
-        startY: 0,
+        startX: 1,
+        startY: 1,
         startOrientation: "Nord",
         path: [],
       },
@@ -198,6 +198,26 @@ export default function App() {
 
   function startMow() {}
 
+  function updateStartMowerPosition(pos, ori, key) {
+    let mow = mowers;
+    if (pos[0] > 0 && pos[0] <= gridSize[1]) mow.array[key].startX = pos[0];
+    else alert("La tondeuse n'est plus sur la pelouse !");
+    if (pos[1] > 0 && pos[1] <= gridSize[0]) mow.array[key].startY = pos[1];
+    else alert("La tondeuse n'est plus sur la pelouse !");
+    mow.array[key].startOrientation = ori;
+    setMowers(mow);
+    forceUpdate();
+  }
+
+  function updatePathMower(char, key, mode) {
+    let letter = char.slice(-1);
+    if (letter === "d" || letter === "D") mowers.array[key].path.push("D");
+    if (letter === "g" || letter === "G") mowers.array[key].path.push("G");
+    if (letter === "a" || letter === "A") mowers.array[key].path.push("A");
+    setMowers(mowers);
+    if (mode == 1) forceUpdate();
+  }
+
   function DisplayMowerForms() {
     return mowers.array.map((mower, key) => {
       return (
@@ -216,9 +236,14 @@ export default function App() {
                     class="form-control"
                     type="number"
                     value={mowers.array[key].startX}
-                    // onChange={(e) =>
-                    //   updateSizeArea([e.target.value, gridSize[1]])
-                    // }
+                    onChange={(e) =>
+                      updateStartMowerPosition(
+                        [e.target.value, mowers.array[key].startY],
+                        mowers.array[key].startOrientation,
+                        key,
+                        0
+                      )
+                    }
                   />
                 </div>
               </div>
@@ -233,9 +258,14 @@ export default function App() {
                     class="form-control"
                     type="number"
                     value={mowers.array[key].startY}
-                    // onChange={(e) =>
-                    //   updateSizeArea([e.target.value, gridSize[1]])
-                    // }
+                    onChange={(e) =>
+                      updateStartMowerPosition(
+                        [mowers.array[key].startX, e.target.value],
+                        mowers.array[key].startOrientation,
+                        key,
+                        0
+                      )
+                    }
                   />
                 </div>
               </div>
@@ -246,7 +276,18 @@ export default function App() {
                   Orientation :
                 </label>
                 <div>
-                  <select class="form-control">
+                  <select
+                    class="form-control"
+                    value={mowers.array[key].startOrientation}
+                    onChange={(e) =>
+                      updateStartMowerPosition(
+                        [mowers.array[key].startX, mowers.array[key].startY],
+                        e.target.value,
+                        key,
+                        0
+                      )
+                    }
+                  >
                     <option>Nord</option>
                     <option>Sud</option>
                     <option>Est</option>
@@ -258,13 +299,25 @@ export default function App() {
           </Grid>
           <div class="input-group mb-3">
             <div class="input-group-append">
-              <button class="btn btn-secondary" type="button">
+              <button
+                class="btn btn-secondary"
+                type="button"
+                onClick={() => updatePathMower("D", key, 1)}
+              >
                 D
               </button>
-              <button class="btn btn-secondary" type="button">
+              <button
+                class="btn btn-secondary"
+                type="button"
+                onClick={() => updatePathMower("G", key, 1)}
+              >
                 G
               </button>
-              <button class="btn btn-secondary" type="button">
+              <button
+                class="btn btn-secondary"
+                type="button"
+                onClick={() => updatePathMower("A", key, 1)}
+              >
                 A
               </button>
             </div>
@@ -273,6 +326,8 @@ export default function App() {
               class="form-control"
               id="formGroupExampleInput"
               placeholder="Chaîne d'instructions"
+              value={mowers.array[key].path}
+              onChange={(e) => updatePathMower(e.target.value, key)}
             />
           </div>
         </div>
