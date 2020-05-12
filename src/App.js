@@ -19,8 +19,8 @@ export default function App() {
   const [mowers, setMowers] = useState({
     array: [
       {
-        startX: 1,
-        startY: 1,
+        startX: 0,
+        startY: 0,
         startOrientation: "Nord",
         path: [],
       },
@@ -73,8 +73,6 @@ export default function App() {
       }
       grid.push(row);
     }
-
-    console.log(grid);
     return grid;
   }
 
@@ -88,7 +86,6 @@ export default function App() {
   }
 
   function setMowerPosition(x, y) {
-    console.log(grid);
     let p = mowerPos;
     p.x = x;
     p.y = y;
@@ -139,8 +136,11 @@ export default function App() {
                 className={classes.cardStyle}
                 ref={(el) => {
                   if (!el) return;
-                  grid[key][key2].card.x = el.getBoundingClientRect().x;
-                  grid[key][key2].card.y = el.getBoundingClientRect().y;
+
+                  grid[key][key2].card.x =
+                    el.getBoundingClientRect().x + window.pageXOffset;
+                  grid[key][key2].card.y =
+                    el.getBoundingClientRect().y + window.pageYOffset;
                 }}
               >
                 <CardMedia
@@ -165,7 +165,25 @@ export default function App() {
     );
   }
 
+  function orientationToDegree(ori) {
+    switch (ori) {
+      case "Nord":
+        return 0;
+      case "Est":
+        return 90;
+      case "Sud":
+        return 180;
+      case "Ouest":
+        return 270;
+      default:
+        return 0;
+    }
+  }
+
   function DisplayMower() {
+    const orientation = orientationToDegree(mowers.array[0].startOrientation);
+    console.log(orientation);
+
     return (
       <div>
         <img
@@ -178,6 +196,7 @@ export default function App() {
             left: `${mowerPos.x}px`,
             top: `${mowerPos.y}px`,
             opacity: mowerPos.visible === true ? 1 : 0,
+            transform: `rotate(${orientation}deg)`,
           }}
         />
       </div>
@@ -196,13 +215,108 @@ export default function App() {
     forceUpdate();
   }
 
-  function startMow() {}
+  // https://zeit.co/blog/async-and-await
+  function sleep(time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+  }
+
+  function startMow() {
+    mowerPos.visible = true;
+
+    for (let i = 0; i < mowers.array.length; i++) {
+
+      
+      mowers.array[i].path.map((action) => {
+        if (action === "A") forward(i);
+        else {
+          pivot(action, i);
+        }
+        let [x, y] = [mowers.array[i].startX, mowers.array[i].startY];
+        
+        y = gridSize[1] - 1 - y;
+        
+        setMowerPosition(grid[y + 1][x].card.x, grid[y + 1][x].card.y);
+        
+        forceUpdate();
+        
+        return 1;
+      });
+    }
+  }
+
+  function pivot(direction, mower) {
+    switch (mowers.array[mower].startOrientation) {
+      case "Nord":
+        if (direction === "D") {
+          mowers.array[mower].startOrientation = "Est";
+        }
+        if (direction === "G") {
+          mowers.array[mower].startOrientation = "Ouest";
+        }
+        break;
+      case "Sud":
+        if (direction === "D") {
+          mowers.array[mower].startOrientation = "Ouest";
+        }
+        if (direction === "G") {
+          mowers.array[mower].startOrientation = "Est";
+        }
+        break;
+      case "Est":
+        if (direction === "D") {
+          mowers.array[mower].startOrientation = "Sud";
+        }
+        if (direction === "G") {
+          mowers.array[mower].startOrientation = "Nord";
+        }
+        break;
+      case "Ouest":
+        if (direction === "D") {
+          mowers.array[mower].startOrientation = "Nord";
+        }
+        if (direction === "G") {
+          mowers.array[mower].startOrientation = "Sud";
+        }
+        break;
+      default:
+        break;
+    }
+    setMowers(mowers);
+    forceUpdate();
+  }
+
+  function forward(mower) {
+    let orientation = mowers.array[mower].startOrientation;
+    if (orientation === "Nord") {
+      if (mowers.array[mower].startY < gridSize[1] - 1) {
+        mowers.array[mower].startY += 1;
+      } else console.log("Mouvement inutile");
+    }
+    if (orientation === "Sud") {
+      if (mowers.array[mower].startY > 0) {
+        mowers.array[mower].startY -= 1;
+      } else console.log("Mouvement inutile");
+    }
+    if (orientation === "Est") {
+      if (mowers.array[mower].startX < gridSize[0] - 1) {
+        mowers.array[mower].startX += 1;
+      } else console.log("Mouvement inutile");
+    }
+    if (orientation === "Ouest") {
+      if (mowers.array[mower].startX > 0) {
+        mowers.array[mower].startX -= 1;
+      } else console.log("Mouvement inutile");
+    }
+    forceUpdate();
+  }
 
   function updateStartMowerPosition(pos, ori, key) {
     let mow = mowers;
-    if (pos[0] > 0 && pos[0] <= gridSize[1]) mow.array[key].startX = pos[0];
+    if (pos[0] >= 0 && pos[0] < gridSize[1])
+      mow.array[key].startX = parseInt(pos[0]);
     else alert("La tondeuse n'est plus sur la pelouse !");
-    if (pos[1] > 0 && pos[1] <= gridSize[0]) mow.array[key].startY = pos[1];
+    if (pos[1] >= 0 && pos[1] < gridSize[0])
+      mow.array[key].startY = parseInt(pos[1]);
     else alert("La tondeuse n'est plus sur la pelouse !");
     mow.array[key].startOrientation = ori;
     setMowers(mow);
@@ -215,7 +329,7 @@ export default function App() {
     if (letter === "g" || letter === "G") mowers.array[key].path.push("G");
     if (letter === "a" || letter === "A") mowers.array[key].path.push("A");
     setMowers(mowers);
-    if (mode == 1) forceUpdate();
+    if (mode === 1) forceUpdate();
   }
 
   function DisplayMowerForms() {
