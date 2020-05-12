@@ -51,11 +51,37 @@ a {
   margin-top: 10px;
   text-align: left;
   margin-left: 50px;
-  font-size: large;
+  font-size: x-large;
   font-weight: bold;
 }
 
 .sizeForm {
   padding-left: auto;
   align-items: center;
+}
+
+.lawn {
+  margin-left: 50px;
+  margin-top: 20px;
+  margin-bottom: 100px;
+}
+
+.formMowers {
+  text-align: left;
+  margin-left: 50px;
+  margin-right: 50px;
+}
+
+.formMowers .title {
+  font-size: x-large;
+  font-weight: bold;
+}
+
+.divMowers {
+  margin-top: 20px;
+}
+
+.numMower {
+  font-size: large;
+  font-weight: bold;
 }

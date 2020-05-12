@@ -2,10 +2,30 @@ import React from "react";
 import "./App.css";
 import { useState } from "react";
 import { CardMedia, makeStyles, Card, Grid } from "@material-ui/core";
+import { Animate } from "react-move";
+
+import grass1 from "./res/grass1.jpg";
+import grass2 from "./res/grass2.jpg";
+import mower from "./res/mower.png";
 
 export default function App() {
   const [gridSize, setGridSize] = useState([5, 5]);
   const [grid, setGrid] = useState(createGrid(gridSize));
+  const [mowerPos, setMowerPos] = useState({
+    x: 0,
+    y: 0,
+    visible: false,
+  });
+  const [mowers, setMowers] = useState({
+    array: [
+      {
+        startX: 0,
+        startY: 0,
+        startOrientation: "Nord",
+        path: [],
+      },
+    ],
+  });
 
   const useStyles = makeStyles({
     cardStyle: {
@@ -21,6 +41,9 @@ export default function App() {
 
   const classes = useStyles();
 
+  const [, updateState] = React.useState();
+  const forceUpdate = React.useCallback(() => updateState({}), []);
+
   return (
     <div className="App">
       <h1>MowGrass-IT</h1>
@@ -29,8 +52,9 @@ export default function App() {
       </button>
 
       <GetGridSizeArea />
+      <GetMowers />
       <DisplayGrid />
-      {console.log(grid)}
+      <DisplayMower />
     </div>
   );
 
@@ -44,9 +68,7 @@ export default function App() {
             x: 0,
             y: 0,
           },
-          mower: {
-            orientation: "N",
-          },
+          mowed: false,
         });
       }
       grid.push(row);
@@ -63,6 +85,14 @@ export default function App() {
         setGrid(createGrid(size));
       } else alert("La taille doit être inférieure à 16");
     } else alert("La taille doit être supérieure à 4");
+  }
+
+  function setMowerPosition(x, y) {
+    console.log(grid);
+    let p = mowerPos;
+    p.x = x;
+    p.y = y;
+    setMowerPos(p);
   }
 
   function GetGridSizeArea() {
@@ -113,7 +143,10 @@ export default function App() {
                   grid[key][key2].card.y = el.getBoundingClientRect().y;
                 }}
               >
-                <CardMedia className={classes.cardMedia} />
+                <CardMedia
+                  className={classes.cardMedia}
+                  image={grid[key][key2].mowed ? grass2 : grass1}
+                />
               </Card>
             </Grid>
           );
@@ -123,8 +156,152 @@ export default function App() {
   }
 
   function DisplayGrid() {
-    return grid.map((row, key) => {
-      return DisplayRow(row, key);
+    return (
+      <div className="lawn">
+        {grid.map((row, key) => {
+          return DisplayRow(row, key);
+        })}
+      </div>
+    );
+  }
+
+  function DisplayMower() {
+    return (
+      <div>
+        <img
+          src={mower}
+          alt="mower"
+          style={{
+            position: "absolute",
+            width: 80,
+            height: 80,
+            left: `${mowerPos.x}px`,
+            top: `${mowerPos.y}px`,
+            opacity: mowerPos.visible === true ? 1 : 0,
+          }}
+        />
+      </div>
+    );
+  }
+
+  function addMower() {
+    let mow = mowers;
+    mow.array.push({
+      startX: 0,
+      startY: 0,
+      startOrientation: "Nord",
+      path: [],
     });
+    setMowers(mow);
+    forceUpdate();
+  }
+
+  function startMow() {}
+
+  function DisplayMowerForms() {
+    return mowers.array.map((mower, key) => {
+      return (
+        <div className="divMowers">
+          <Grid container>
+            <Grid item xs={2}>
+              <p className="numMower">Tondeuse {key + 1}</p>
+            </Grid>
+            <Grid item xs>
+              <div class="form-group row sizeForm">
+                <label for="example-number-input" class="col-4 col-form-label">
+                  Position X :
+                </label>
+                <div>
+                  <input
+                    class="form-control"
+                    type="number"
+                    value={mowers.array[key].startX}
+                    // onChange={(e) =>
+                    //   updateSizeArea([e.target.value, gridSize[1]])
+                    // }
+                  />
+                </div>
+              </div>
+            </Grid>
+            <Grid item xs>
+              <div class="form-group row sizeForm">
+                <label for="example-number-input" class="col-4 col-form-label">
+                  Position Y :
+                </label>
+                <div>
+                  <input
+                    class="form-control"
+                    type="number"
+                    value={mowers.array[key].startY}
+                    // onChange={(e) =>
+                    //   updateSizeArea([e.target.value, gridSize[1]])
+                    // }
+                  />
+                </div>
+              </div>
+            </Grid>
+            <Grid item xs>
+              <div class="form-group row sizeForm">
+                <label for="example-number-input" class="col-4 col-form-label">
+                  Orientation :
+                </label>
+                <div>
+                  <select class="form-control">
+                    <option>Nord</option>
+                    <option>Sud</option>
+                    <option>Est</option>
+                    <option>Ouest</option>
+                  </select>
+                </div>
+              </div>
+            </Grid>
+          </Grid>
+          <div class="input-group mb-3">
+            <div class="input-group-append">
+              <button class="btn btn-secondary" type="button">
+                D
+              </button>
+              <button class="btn btn-secondary" type="button">
+                G
+              </button>
+              <button class="btn btn-secondary" type="button">
+                A
+              </button>
+            </div>
+            <input
+              type="text"
+              class="form-control"
+              id="formGroupExampleInput"
+              placeholder="Chaîne d'instructions"
+            />
+          </div>
+        </div>
+      );
+    });
+  }
+
+  function GetMowers() {
+    return (
+      <div className="formMowers">
+        <p className="title">Entrer les informations sur les tondeuses :</p>
+        <button
+          type="button"
+          class="btn btn-primary"
+          onClick={() => addMower()}
+        >
+          Ajouter une tondeuse
+        </button>
+
+        <DisplayMowerForms />
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          onClick={() => startMow()}
+        >
+          Démarrer la tonte
+        </button>
+      </div>
+    );
   }
 }
