@@ -63,7 +63,7 @@ a {
 .lawn {
   margin-left: 50px;
   margin-top: 20px;
-  margin-bottom: 100px;
+  margin-bottom: 20px;
 }
 
 .formMowers {
@@ -72,7 +72,14 @@ a {
   margin-right: 50px;
 }
 
-.formMowers .title {
+.endMow {
+  text-align: left;
+  margin-left: 50px;
+  margin-right: 50px;
+}
+
+.title {
+  text-align: left;
   font-size: x-large;
   font-weight: bold;
 }
@@ -84,4 +91,12 @@ a {
 .numMower {
   font-size: large;
   font-weight: bold;
+}
+
+.currentMowerText {
+  justify-content: center;
+}
+
+.textMowerCurrent {
+  margin-left: 10px;
 }

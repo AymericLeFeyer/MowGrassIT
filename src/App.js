@@ -2,7 +2,6 @@ import React from "react";
 import "./App.css";
 import { useState } from "react";
 import { CardMedia, makeStyles, Card, Grid } from "@material-ui/core";
-import { Animate } from "react-move";
 
 import grass1 from "./res/grass1.jpg";
 import grass2 from "./res/grass2.jpg";
@@ -26,6 +25,10 @@ export default function App() {
       },
     ],
   });
+
+  const [currentMower, setCurrentMower] = useState(0);
+  const [currentAction, setCurrentAction] = useState(0);
+  const [finished, setFinished] = useState(false);
 
   const useStyles = makeStyles({
     cardStyle: {
@@ -55,6 +58,7 @@ export default function App() {
       <GetMowers />
       <DisplayGrid />
       <DisplayMower />
+      {finished ? <EndMow /> : null}
     </div>
   );
 
@@ -93,6 +97,7 @@ export default function App() {
   }
 
   function GetGridSizeArea() {
+    const started = !(currentMower === 0 && currentAction === 0) || finished;
     return (
       <div>
         <p className="textSizeGrid">Taille de la grille : </p>
@@ -100,27 +105,35 @@ export default function App() {
           <label for="example-number-input" class="col-2 col-form-label">
             Hauteur :
           </label>
-          <div>
-            <input
-              class="form-control"
-              type="number"
-              value={gridSize[0]}
-              onChange={(e) => updateSizeArea([e.target.value, gridSize[1]])}
-            />
-          </div>
+          {started ? (
+            <label class="col-form-label">{gridSize[0]}</label>
+          ) : (
+            <div>
+              <input
+                class="form-control"
+                type="number"
+                value={gridSize[0]}
+                onChange={(e) => updateSizeArea([e.target.value, gridSize[1]])}
+              />
+            </div>
+          )}
         </div>
         <div class="form-group row sizeForm">
           <label for="example-number-input" class="col-2 col-form-label">
             Largeur :
           </label>
-          <div>
-            <input
-              class="form-control"
-              type="number"
-              value={gridSize[1]}
-              onChange={(e) => updateSizeArea([gridSize[0], e.target.value])}
-            />
-          </div>
+          {started ? (
+            <label class="col-form-label">{gridSize[1]}</label>
+          ) : (
+            <div>
+              <input
+                class="form-control"
+                type="number"
+                value={gridSize[1]}
+                onChange={(e) => updateSizeArea([gridSize[0], e.target.value])}
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -181,7 +194,9 @@ export default function App() {
   }
 
   function DisplayMower() {
-    const orientation = orientationToDegree(mowers.array[0].startOrientation);
+    const orientation = orientationToDegree(
+      mowers.array[currentMower].startOrientation
+    );
     console.log(orientation);
 
     return (
@@ -215,32 +230,44 @@ export default function App() {
     forceUpdate();
   }
 
-  // https://zeit.co/blog/async-and-await
-  function sleep(time) {
-    return new Promise((resolve) => setTimeout(resolve, time));
+  function startMow() {
+    console.log(
+      "operation : " + mowers.array[currentMower].path[currentAction]
+    );
+    mowerPos.visible = true;
+    let [x, y] = [
+      mowers.array[currentMower].startX,
+      mowers.array[currentMower].startY,
+    ];
+
+    y = gridSize[1] - 1 - y;
+
+    grid[y + 1][x].mowed = true;
+
+    setMowerPosition(grid[y + 1][x].card.x, grid[y + 1][x].card.y);
+
+    forceUpdate();
+    if (finished === false) {
+      console.log(currentMower, currentAction);
+      if (mowers.array.length > currentMower) {
+        if (mowers.array[currentMower].path.length > currentAction) {
+          nextOperation(currentMower, currentAction);
+          setCurrentAction(currentAction + 1);
+        } else {
+          if (mowers.array.length - 1 > currentMower) {
+            setCurrentMower(currentMower + 1);
+            setCurrentAction(0);
+          } else setFinished(true);
+        }
+      }
+    }
   }
 
-  function startMow() {
-    mowerPos.visible = true;
-
-    for (let i = 0; i < mowers.array.length; i++) {
-
-      
-      mowers.array[i].path.map((action) => {
-        if (action === "A") forward(i);
-        else {
-          pivot(action, i);
-        }
-        let [x, y] = [mowers.array[i].startX, mowers.array[i].startY];
-        
-        y = gridSize[1] - 1 - y;
-        
-        setMowerPosition(grid[y + 1][x].card.x, grid[y + 1][x].card.y);
-        
-        forceUpdate();
-        
-        return 1;
-      });
+  function nextOperation(mower, id) {
+    const action = mowers.array[mower].path[id];
+    if (action === "A") forward(mower);
+    else {
+      pivot(action, mower);
     }
   }
 
@@ -282,7 +309,6 @@ export default function App() {
         break;
     }
     setMowers(mowers);
-    forceUpdate();
   }
 
   function forward(mower) {
@@ -307,7 +333,7 @@ export default function App() {
         mowers.array[mower].startX -= 1;
       } else console.log("Mouvement inutile");
     }
-    forceUpdate();
+    setMowers(mowers);
   }
 
   function updateStartMowerPosition(pos, ori, key) {
@@ -333,6 +359,7 @@ export default function App() {
   }
 
   function DisplayMowerForms() {
+    const started = !(currentMower === 0 && currentAction === 0) || finished;
     return mowers.array.map((mower, key) => {
       return (
         <div className="divMowers">
@@ -345,21 +372,28 @@ export default function App() {
                 <label for="example-number-input" class="col-4 col-form-label">
                   Position X :
                 </label>
-                <div>
-                  <input
-                    class="form-control"
-                    type="number"
-                    value={mowers.array[key].startX}
-                    onChange={(e) =>
-                      updateStartMowerPosition(
-                        [e.target.value, mowers.array[key].startY],
-                        mowers.array[key].startOrientation,
-                        key,
-                        0
-                      )
-                    }
-                  />
-                </div>
+
+                {started ? (
+                  <label class="col-4 col-form-label">
+                    {mowers.array[key].startX}
+                  </label>
+                ) : (
+                  <div>
+                    <input
+                      class="form-control"
+                      type="number"
+                      value={mowers.array[key].startX}
+                      onChange={(e) =>
+                        updateStartMowerPosition(
+                          [e.target.value, mowers.array[key].startY],
+                          mowers.array[key].startOrientation,
+                          key,
+                          0
+                        )
+                      }
+                    />
+                  </div>
+                )}
               </div>
             </Grid>
             <Grid item xs>
@@ -367,21 +401,28 @@ export default function App() {
                 <label for="example-number-input" class="col-4 col-form-label">
                   Position Y :
                 </label>
-                <div>
-                  <input
-                    class="form-control"
-                    type="number"
-                    value={mowers.array[key].startY}
-                    onChange={(e) =>
-                      updateStartMowerPosition(
-                        [mowers.array[key].startX, e.target.value],
-                        mowers.array[key].startOrientation,
-                        key,
-                        0
-                      )
-                    }
-                  />
-                </div>
+
+                {started ? (
+                  <label class="col-4 col-form-label">
+                    {mowers.array[key].startY}
+                  </label>
+                ) : (
+                  <div>
+                    <input
+                      class="form-control"
+                      type="number"
+                      value={mowers.array[key].startY}
+                      onChange={(e) =>
+                        updateStartMowerPosition(
+                          [mowers.array[key].startX, e.target.value],
+                          mowers.array[key].startOrientation,
+                          key,
+                          0
+                        )
+                      }
+                    />
+                  </div>
+                )}
               </div>
             </Grid>
             <Grid item xs>
@@ -389,60 +430,79 @@ export default function App() {
                 <label for="example-number-input" class="col-4 col-form-label">
                   Orientation :
                 </label>
-                <div>
-                  <select
-                    class="form-control"
-                    value={mowers.array[key].startOrientation}
-                    onChange={(e) =>
-                      updateStartMowerPosition(
-                        [mowers.array[key].startX, mowers.array[key].startY],
-                        e.target.value,
-                        key,
-                        0
-                      )
-                    }
-                  >
-                    <option>Nord</option>
-                    <option>Sud</option>
-                    <option>Est</option>
-                    <option>Ouest</option>
-                  </select>
-                </div>
+
+                {started ? (
+                  <label class="col-4 col-form-label">
+                    {mowers.array[key].startOrientation}
+                  </label>
+                ) : (
+                  <div>
+                    <select
+                      class="form-control"
+                      value={mowers.array[key].startOrientation}
+                      onChange={(e) =>
+                        updateStartMowerPosition(
+                          [mowers.array[key].startX, mowers.array[key].startY],
+                          e.target.value,
+                          key,
+                          0
+                        )
+                      }
+                    >
+                      <option>Nord</option>
+                      <option>Sud</option>
+                      <option>Est</option>
+                      <option>Ouest</option>
+                    </select>
+                  </div>
+                )}
               </div>
             </Grid>
           </Grid>
           <div class="input-group mb-3">
-            <div class="input-group-append">
-              <button
-                class="btn btn-secondary"
-                type="button"
-                onClick={() => updatePathMower("D", key, 1)}
-              >
-                D
-              </button>
-              <button
-                class="btn btn-secondary"
-                type="button"
-                onClick={() => updatePathMower("G", key, 1)}
-              >
-                G
-              </button>
-              <button
-                class="btn btn-secondary"
-                type="button"
-                onClick={() => updatePathMower("A", key, 1)}
-              >
-                A
-              </button>
-            </div>
-            <input
-              type="text"
-              class="form-control"
-              id="formGroupExampleInput"
-              placeholder="Chaîne d'instructions"
-              value={mowers.array[key].path}
-              onChange={(e) => updatePathMower(e.target.value, key)}
-            />
+            {started ? (
+              <label class="col-form-label">
+                Instructions : 
+              </label>
+            ) : (
+              <div class="input-group-append">
+                <button
+                  class="btn btn-secondary"
+                  type="button"
+                  onClick={() => updatePathMower("D", key, 1)}
+                >
+                  D
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  type="button"
+                  onClick={() => updatePathMower("G", key, 1)}
+                >
+                  G
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  type="button"
+                  onClick={() => updatePathMower("A", key, 1)}
+                >
+                  A
+                </button>
+              </div>
+            )}
+            {started ? (
+              <label class="col-4 col-form-label">
+                {mowers.array[key].path}
+              </label>
+            ) : (
+              <input
+                type="text"
+                class="form-control"
+                id="formGroupExampleInput"
+                placeholder="Chaîne d'instructions"
+                value={mowers.array[key].path}
+                onChange={(e) => updatePathMower(e.target.value, key)}
+              />
+            )}
           </div>
         </div>
       );
@@ -450,26 +510,68 @@ export default function App() {
   }
 
   function GetMowers() {
+    const started = !(currentMower === 0 && currentAction === 0) || finished;
     return (
       <div className="formMowers">
         <p className="title">Entrer les informations sur les tondeuses :</p>
         <button
           type="button"
           class="btn btn-primary"
-          onClick={() => addMower()}
+          onClick={
+            started
+              ? () =>
+                  alert(
+                    "Tu ne peux pas ajouter de tondeuses en cours de route !"
+                  )
+              : () => addMower()
+          }
         >
-          Ajouter une tondeuse
+          {started
+            ? "Les tondeuses ne sont plus modifiables"
+            : "Ajouter une tondeuse"}
         </button>
 
         <DisplayMowerForms />
+        <Grid container>
+          <Grid item>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onClick={() => startMow()}
+            >
+              {currentMower === 0 && currentAction === 0 && !finished
+                ? "Démarrer la tonte"
+                : finished
+                ? "La tonte est terminée"
+                : "Poursuivre la tonte"}
+            </button>
+          </Grid>
+          <Grid item>
+            {started ? (
+              finished ? null : (
+                <p className="col-form-label textMowerCurrent">
+                  La tondeuse {currentMower} est en train de tondre
+                </p>
+              )
+            ) : null}
+          </Grid>
+        </Grid>
+      </div>
+    );
+  }
 
-        <button
-          type="button"
-          class="btn btn-primary"
-          onClick={() => startMow()}
-        >
-          Démarrer la tonte
-        </button>
+  function EndMow() {
+    return (
+      <div className="endMow">
+        <p className="title">La tonte est terminée</p>
+        {mowers.array.map((mower, key) => {
+          return (
+            <p>
+              La tondeuse {key + 1} s'est arrêtée en {mower.startX},
+              {mower.startY}, orientée {mower.startOrientation}
+            </p>
+          );
+        })}
       </div>
     );
   }
