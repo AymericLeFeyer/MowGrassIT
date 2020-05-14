@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/MowGrassIT/static/css/main.05c758b6.chunk.css",
+    "main.js": "/MowGrassIT/static/js/main.97af3db2.chunk.js",
+    "main.js.map": "/MowGrassIT/static/js/main.97af3db2.chunk.js.map",
+    "runtime-main.js": "/MowGrassIT/static/js/runtime-main.911e8a1b.js",
+    "runtime-main.js.map": "/MowGrassIT/static/js/runtime-main.911e8a1b.js.map",
+    "static/js/2.aa7ff2f4.chunk.js": "/MowGrassIT/static/js/2.aa7ff2f4.chunk.js",
+    "static/js/2.aa7ff2f4.chunk.js.map": "/MowGrassIT/static/js/2.aa7ff2f4.chunk.js.map",
+    "index.html": "/MowGrassIT/index.html",
+    "precache-manifest.458de86df411620b62ea46354f33da6b.js": "/MowGrassIT/precache-manifest.458de86df411620b62ea46354f33da6b.js",
+    "service-worker.js": "/MowGrassIT/service-worker.js",
+    "static/css/main.05c758b6.chunk.css.map": "/MowGrassIT/static/css/main.05c758b6.chunk.css.map",
+    "static/js/2.aa7ff2f4.chunk.js.LICENSE.txt": "/MowGrassIT/static/js/2.aa7ff2f4.chunk.js.LICENSE.txt",
+    "static/media/subject.pdf": "/MowGrassIT/static/media/subject.10eebb46.pdf"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.911e8a1b.js",
+    "static/js/2.aa7ff2f4.chunk.js",
+    "static/css/main.05c758b6.chunk.css",
+    "static/js/main.97af3db2.chunk.js"
+  ]
+}
